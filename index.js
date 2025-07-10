@@ -11,10 +11,13 @@ app.get("/scrape", async (req, res) => {
   }
 
   try {
+    let videoSrc = "";
+
     const browser = await puppeteer.launch({
       headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
+
     const page = await browser.newPage();
 
     await page.setUserAgent(
@@ -22,13 +25,25 @@ app.get("/scrape", async (req, res) => {
       "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     );
 
+    // Intercept .mp4 video file
+    page.on("response", async (response) => {
+      const url = response.url();
+      if (
+        url.includes("tiktokcdn.com") &&
+        url.includes(".mp4") &&
+        !videoSrc
+      ) {
+        videoSrc = url;
+      }
+    });
+
     await page.goto(videoUrl, { waitUntil: "networkidle2", timeout: 0 });
 
-    // Tunggu elemen video muncul
+    // Tunggu tag <video> muncul
     await page.waitForSelector("video");
 
-    // Ambil URL video dari tag <video>
-    const videoSrc = await page.$eval("video", video => video.src);
+    // Delay ekstra untuk pastikan semua XHR selesai
+    await page.waitForTimeout(3000);
 
     // Ambil deskripsi
     const desc = await page.evaluate(() => {
@@ -47,7 +62,7 @@ app.get("/scrape", async (req, res) => {
     return res.json({
       author: username,
       description: desc,
-      video_url: videoSrc,
+      video_url: videoSrc || "not found"
     });
   } catch (err) {
     console.error("Scrape failed:", err.message);
@@ -56,7 +71,7 @@ app.get("/scrape", async (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("TikTok Scraper aktif. Gunakan endpoint /scrape?url=...");
+  res.send("TikTok Scraper udh aktif. Gunakan endpoint /scrape?url=...");
 });
 
 app.listen(port, () => {
