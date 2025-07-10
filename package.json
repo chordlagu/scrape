@@ -1,5 +1,5 @@
 {
-  "name": "scrape",
+  "name": "tiktok-puppeteer-scraper",
   "version": "1.0.0",
   "description": "TikTok scraper tanpa watermark menggunakan Puppeteer",
   "main": "index.js",
@@ -8,6 +8,6 @@
   },
   "dependencies": {
     "express": "^4.18.2",
-    "puppeteer": "^21.3.8"
+    "puppeteer": "^22.8.2"
   }
 }
